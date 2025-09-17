@@ -9,6 +9,8 @@
 #include <unistd.h>
 #endif
 
+#define DEFAULT_FILENAME "matrix_results.txt"
+
 static void show_loading_bar(const char* message) {
 	const int width = 30;
 	printf("%s\n", message);
@@ -44,7 +46,6 @@ static void wait_after_output(void) {
 #endif
 }
 
-
 static void clear_stdin(void) {
 	int ch;
 	while ((ch = getchar()) != '\n' && ch != EOF);
@@ -66,6 +67,14 @@ static Matrix* prompt_create_and_input(void) {
 	return m;
 }
 
+static void prompt_save_result(Matrix* result, const char* operation_name) {
+	char choice;
+	printf("Da li zelite da sacuvate rezultat u fajl? (d/n): ");
+	if (scanf(" %c", &choice) == 1 && (choice == 'd' || choice == 'D')) {
+		matrix_save_result_to_file(result, operation_name, DEFAULT_FILENAME);
+	}
+}
+
 int main(void) {
 	int choice = 0;
 	Matrix* A = NULL, * B = NULL, * R = NULL;
@@ -85,6 +94,8 @@ int main(void) {
 		printf("11) Pomnozi B skalarnim\n");
 		printf("12) Oslobodi A\n");
 		printf("13) Oslobodi B\n");
+		printf("14) Prikazi sacuvane rezultate\n");
+		printf("15) Obrisi sve sacuvane rezultate\n");
 		printf("0) Izlaz\n");
 		printf("Izbor: ");
 		printf("\n\n");
@@ -139,6 +150,7 @@ int main(void) {
 				show_loading_bar("Sabiranje...");
 				printf("A + B =\n"); 
 				matrix_print(R);
+				prompt_save_result(R, "A + B");
 				wait_after_output();
 				matrix_free(R);
 			}
@@ -154,9 +166,10 @@ int main(void) {
 				printf("Greska: matrice nisu iste dimenzije.\n"); 
 			}
 			else {
-				show_loading_bar("Oduzimanje...\n");
+				show_loading_bar("Oduzimanje...");
 				printf("A - B =\n"); 
 				matrix_print(R);
+				prompt_save_result(R, "A - B");
 				wait_after_output();
 				matrix_free(R);
 			}
@@ -172,9 +185,10 @@ int main(void) {
 				printf("Greska: neodgovarajuce dimenzije za mnozenje (A.cols must == B.rows).\n"); 
 			}
 			else {
-				show_loading_bar("Mnozenje...\n");
+				show_loading_bar("Mnozenje...");
 				printf("A * B =\n"); 
 				matrix_print(R);
+				prompt_save_result(R, "A * B");
 				wait_after_output();
 				matrix_free(R);
 			}
@@ -186,9 +200,10 @@ int main(void) {
 				break; 
 			}
 			R = matrix_transpose(A);
+			show_loading_bar("Transponovanje A matrice...");
 			printf("A^T =\n"); 
-			show_loading_bar("Transponovanje A matrice...\n");
 			matrix_print(R);
+			prompt_save_result(R, "A^T (Transponovanje A)");
 			wait_after_output();
 			matrix_free(R); 
 			R = NULL;
@@ -199,9 +214,10 @@ int main(void) {
 				break; 
 			}
 			R = matrix_transpose(B);
+			show_loading_bar("Transponovanje B matrice...");
 			printf("B^T =\n"); 
-			show_loading_bar("Transponovanje B matrice...\n");
 			matrix_print(R);
+			prompt_save_result(R, "B^T (Transponovanje B)");
 			wait_after_output();
 			matrix_free(R);
 			R = NULL;
@@ -218,9 +234,14 @@ int main(void) {
 					clear_stdin(); printf("Nevalidan unos.\n"); break; 
 				}
 				R = matrix_scalar_mul(A, s);
+				show_loading_bar("Skaliranje A matrice...");
 				printf("A * %g =\n", s);
-				show_loading_bar("Skaliranje A matrice...\n");
 				matrix_print(R);
+				
+				char op_name[100];
+				snprintf(op_name, sizeof(op_name), "A * %.2f (Skaliranje A)", s);
+				prompt_save_result(R, op_name);
+				
 				wait_after_output();
 				matrix_free(R); 
 				R = NULL;
@@ -240,9 +261,14 @@ int main(void) {
 					break; 
 				}
 				R = matrix_scalar_mul(B, s);
+				show_loading_bar("Skaliranje B matrice...");
 				printf("B * %g =\n", s);
-				show_loading_bar("Skaliranje B matrice...\n");
 				matrix_print(R);
+				
+				char op_name[100];
+				snprintf(op_name, sizeof(op_name), "B * %.2f (Skaliranje B)", s);
+				prompt_save_result(R, op_name);
+				
 				wait_after_output();
 				matrix_free(R); 
 				R = NULL;
@@ -264,6 +290,23 @@ int main(void) {
 			}
 			else {
 				printf("Matrica B nije inicijalizovana.\n");
+			}
+			break;
+		case 14:
+			matrix_show_saved_results(DEFAULT_FILENAME);
+			printf("\nPritisnite Enter za nastavak...");
+			clear_stdin();
+			getchar();
+			break;
+		case 15:
+			{
+				char confirm;
+				printf("Da li ste sigurni da zelite da obrisete sve sacuvane rezultate? (d/n): ");
+				if (scanf(" %c", &confirm) == 1 && (confirm == 'd' || confirm == 'D')) {
+					matrix_delete_all_data(DEFAULT_FILENAME);
+				} else {
+					printf("Brisanje je otkazano.\n");
+				}
 			}
 			break;
 		case 0:

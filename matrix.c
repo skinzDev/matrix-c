@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #define _CRT_SECURE_NO_WARNINGS
 
 Matrix* matrix_create(size_t r, size_t c) {
@@ -112,4 +113,77 @@ Matrix* matrix_scalar_mul(const Matrix* a, double scalar) {
     size_t n = a->rows * a->cols;
     for (size_t i = 0; i < n; ++i) r->data[i] = a->data[i] * scalar;
     return r;
+}
+
+int matrix_save_result_to_file(const Matrix* m, const char* operation_name, const char* filename) {
+    if (!m || !operation_name || !filename) return 0;
+    
+    FILE* file = fopen(filename, "a");
+    if (!file) {
+        printf("Greska: Ne mogu da otvorim fajl '%s' za pisanje.\n", filename);
+        return 0;
+    }
+    
+    time_t now = time(NULL);
+    char* time_str = ctime(&now);
+    time_str[strlen(time_str) - 1] = '\0';
+    
+    fprintf(file, "\n========================================\n");
+    fprintf(file, "Operacija: %s\n", operation_name);
+    fprintf(file, "Vreme: %s\n", time_str);
+    fprintf(file, "Dimenzije: %zux%zu\n", m->rows, m->cols);
+    fprintf(file, "========================================\n");
+    
+    for (size_t i = 0; i < m->rows; ++i) {
+        for (size_t j = 0; j < m->cols; ++j) {
+            fprintf(file, "%8.2f ", m->data[i * m->cols + j]);
+        }
+        fprintf(file, "\n");
+    }
+    fprintf(file, "\n");
+    
+    fclose(file);
+    printf("Rezultat je sacuvan u fajl '%s'.\n", filename);
+    return 1;
+}
+
+int matrix_delete_all_data(const char* filename) {
+    if (!filename) return 0;
+    
+    FILE* file = fopen(filename, "w"); // Write mode truncates the file
+    if (!file) {
+        printf("Greska: Ne mogu da otvorim fajl '%s' za brisanje.\n", filename);
+        return 0;
+    }
+    
+    fclose(file);
+    printf("Svi podaci iz fajla '%s' su obrisani.\n", filename);
+    return 1;
+}
+
+void matrix_show_saved_results(const char* filename) {
+    if (!filename) return;
+    
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        printf("Fajl '%s' ne postoji ili ne moze da se otvori.\n", filename);
+        return;
+    }
+    
+    printf("\n=== Sadrzaj fajla '%s' ===\n", filename);
+    
+    char buffer[1000];
+    int empty_file = 1;
+    
+    while (fgets(buffer, sizeof(buffer), file)) {
+        printf("%s", buffer);
+        empty_file = 0;
+    }
+    
+    if (empty_file) {
+        printf("Fajl je prazan.\n");
+    }
+    
+    printf("\n=== Kraj fajla ===\n");
+    fclose(file);
 }

@@ -4,7 +4,6 @@
 
 #include <stddef.h>
 
-
 typedef struct {
 	size_t rows;
 	size_t cols;
@@ -28,5 +27,9 @@ Matrix* matrix_transpose(const Matrix* a);
 Matrix* matrix_scalar_mul(const Matrix* a, double scalar);
 
 int matrix_is_same_size(const Matrix* a, const Matrix* b);
+
+int matrix_save_result_to_file(const Matrix* m, const char* operation_name, const char* filename);
+int matrix_delete_all_data(const char* filename);
+void matrix_show_saved_results(const char* filename);
 
 #endif
